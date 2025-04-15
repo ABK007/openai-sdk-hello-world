@@ -34,12 +34,44 @@ agent = Agent(
 )
 
 # step 4: run agent
-result = Runner.run_sync(
-    input="What is the capital of France?",
-    run_config=run_config,
-    starting_agent=agent
-)
+# result = Runner.run_sync(
+#     input="What is the capital of France?",
+#     run_config=run_config,
+#     starting_agent=agent
+# )  -w
 
-print(result)
+# print(result)
 
+@cl.on_chat_start
+async def handle_chat_start():
+    cl.user_session.set("history", [])
+    await cl.Message(content="Hello, I'm Panaversity Support Agent. How can I help you today?").send()
+    
+
+@cl.on_message
+async def handle_message(message: cl.message):
+    history = cl.user_session.get("history")
+    
+    history.append(
+        {
+            "role": "user",
+            "content": message.content
+        }
+    )
+    result = await Runner.run(
+        starting_agent=agent,
+        input=history,
+        run_config=run_config,
+    )
+    
+    history.append(
+        {
+            "role": "assistant",
+            "content": result.final_output
+        }
+    )
+    
+    cl.user_session.set("history", history)
+    
+    await cl.Message(content=result.final_output).send()
 
