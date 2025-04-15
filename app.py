@@ -1,11 +1,20 @@
 import chainlit as cl
-from agents import Agent, RunConfig, AsyncOpenAI, OpenAIChatCompletionsModel, Runner
+from agents import Agent, RunConfig, AsyncOpenAI, OpenAIChatCompletionsModel, Runner, function_tool
 from dotenv import load_dotenv
 import os
+
 
 load_dotenv() 
 
 gemini_api_key = os.getenv("GEMINI_API_KEY")
+
+
+@function_tool
+def get_weather(location: str) -> str:
+    """
+    Get the weather for a specific location.
+    """
+    return f"The weather in {location} is sunny."
 
 
 # step 1: provider
@@ -30,7 +39,8 @@ run_config = RunConfig(
 # step 3: agent
 agent = Agent(
     instructions="You are a helpful assistant that can asnwer questions",
-    name="Panaversity Support Agent"
+    name="Panaversity Support Agent",
+    tools=[get_weather]
 )
 
 # step 4: run agent
@@ -41,6 +51,8 @@ agent = Agent(
 # )  -w
 
 # print(result)
+
+
 
 @cl.on_chat_start
 async def handle_chat_start():
@@ -62,6 +74,7 @@ async def handle_message(message: cl.message):
         starting_agent=agent,
         input=history,
         run_config=run_config,
+        
     )
     
     history.append(
